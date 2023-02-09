@@ -23,7 +23,8 @@ public partial class WarehouseContext : DbContext
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
-        .UseSqlServer(ConfigurationManager.ConnectionStrings["defaultConnection"].ConnectionString);
+        .UseSqlServer(ConfigurationManager.ConnectionStrings["defaultConnection"].ConnectionString)
+        .UseLazyLoadingProxies();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

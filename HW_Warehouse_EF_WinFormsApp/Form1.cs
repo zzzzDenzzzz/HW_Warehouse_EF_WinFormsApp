@@ -14,25 +14,87 @@ namespace HW_Warehouse_EF_WinFormsApp
             InitializeComponent();
             _context = new WarehouseContext();
             _context.Database.Migrate();
+            Load += new EventHandler(GoodsShowAsync!);
+            mainTabControl.Selected += new TabControlEventHandler(TabPageSelecting!);
         }
 
-        async void LoadFormShowGoods(object sender, EventArgs e)
+        void TabPageSelecting(object sender, EventArgs e)
         {
-            TabPageShow(await _context.Goods.ToListAsync(), gridGoods, "Id", "Name", "Cost", "GoodsTypeId");
+            if (mainTabControl.SelectedTab == tbpGoods)
+            {
+                GoodsShowAsync(sender, e);
+            }
+            else if (mainTabControl.SelectedTab == tbpDelivery)
+            {
+                DeliveryShowAsync(sender, e);
+            }
+            else if (mainTabControl.SelectedTab == tbpSuppliers)
+            {
+                SuppliersShowAsync(sender, e);
+            }
+            else if (mainTabControl.SelectedTab == tbpGoodsTypes)
+            {
+                GoodsTypesShowAsync(sender, e);
+            }
+            else
+            {
+                ;
+            }
         }
 
-        async void TbpDeliveryShow(object sender, EventArgs e)
+        async void GoodsShowAsync(object sender, EventArgs e)
         {
-            TabPageShow(await _context.Deliveries.ToListAsync(), gridDeliveres, "Id", "Amount", "DeleveryDate", "GoodsId", "SupplierId");
+            DatabaseContextTabPageShow(await _context!.Goods.ToListAsync(), gridGoods, "Id", "Name", "Cost", "GoodsTypeId");
         }
 
-        static void TabPageShow<T>(IEnumerable<T> list, DataGridView view, params string[] nameColumns)
+        async void DeliveryShowAsync(object sender, EventArgs e)
+        {
+            DatabaseContextTabPageShow(await _context!.Deliveries.ToListAsync(), gridDeliveres, "Id", "Amount", "DeleveryDate", "GoodsId", "SupplierId");
+        }
+
+        async void SuppliersShowAsync(object sender, EventArgs e)
+        {
+            DatabaseContextTabPageShow(await _context!.Suppliers.ToListAsync(), gridSuppliers, "Id", "Name");
+        }
+
+        async void GoodsTypesShowAsync(object sender, EventArgs e)
+        {
+            DatabaseContextTabPageShow(await _context!.GoodsTypes.ToListAsync(), gridGoodsTypes, "Id", "Name");
+        }
+
+        static void DatabaseContextTabPageShow<T>(IEnumerable<T> list, DataGridView view, params string[] namesColumn)
         {
             var table = new DataTable();
-            using var reader = ObjectReader.Create(list, nameColumns);
+            using var reader = ObjectReader.Create(list, namesColumn);
             table.Load(reader);
-            view.DataSource = null;
             view.DataSource = table;
+        }
+
+        void BtnSave_Click(object sender, EventArgs e)
+        {
+            SaveGoogsAsync();
+        }
+
+        async void SaveGoogsAsync()
+        {
+            for (int i = 1; i < gridGoods.RowCount; i++)
+            {
+                var name = gridGoods["Name", i].Value;
+                var goodsTypeId = gridGoods["GoodsTypeId", i].Value;
+                var cost = gridGoods["Cost", i].Value;
+
+                if (name != null && goodsTypeId != null && cost != null)
+                {
+                    _context?.Goods.Add(
+                        new Good
+                        {
+                            Name = Convert.ToString(name),
+                            GoodsTypeId = Convert.ToInt32(goodsTypeId),
+                            Cost = Convert.ToDecimal(cost)
+                        });
+                    await _context!.SaveChangesAsync();
+                }
+            }
         }
     }
 }
